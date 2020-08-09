@@ -1,0 +1,31 @@
+name: Tests
+
+on: [push]
+
+jobs:
+  server-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Environment Variables
+      run: env
+    - name: Print Working Directory
+      run: pwd
+    - name: Print Files
+      run: ls -al
+    - name: Print User
+      run: whoami
+    - name: Install server dependencies
+      run: npm install
+    - name: Transpiles files # so Jest will also run the tests using plain JS
+      run: npm run build
+    - name: Test server
+      run: npm test

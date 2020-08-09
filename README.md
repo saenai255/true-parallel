@@ -39,7 +39,7 @@ This section illustrates some synthetic examples. Take them with a grain of salt
 **Important!**
 All functions must be *pure*. This means that they should only rely on *input parameters* and *output* because they cannot access any higher scope, even if the IDE doesn't highlight an error.
 
-Good Example:
+Working Example:
 ```ts
 const task = Task.of(({ a, b }) => a + b, {
 	a: 1,
@@ -49,7 +49,7 @@ const task = Task.of(({ a, b }) => a + b, {
 const result = await Task.execute();
 console.log(result) // 3;
 ```
-Bad Example:
+Example of a bad function parameter:
 ```ts
 const b = 2;
 const task = Task.of({ a }) => a + b /* b is not in scope */, {

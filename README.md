@@ -1,6 +1,8 @@
 
 # True Parallel
 
+![Tests](https://github.com/paulcosma97/true-parallel/workflows/Tests/badge.svg)
+
 This library helps you to handle JavaScript threads more easily, without exhausting resources or limiting performance. I made it due to help me with some of my projects.
 
 Feel free the create issues and pull requests.

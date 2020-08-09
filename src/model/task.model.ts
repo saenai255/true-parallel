@@ -58,7 +58,7 @@ export default class Task<TResult, TArgs> {
                 try {
                     __args = JSON.parse('${JSON.stringify(this.args)}');
                 } catch(e) {
-                    __args = this.args;
+                    __args = ${this.args};
                 }
 
                 const result = await (${rawFn})(__args);
@@ -87,7 +87,7 @@ export default class Task<TResult, TArgs> {
                 try {
                     __args = JSON.parse('${JSON.stringify(this.args)}');
                 } catch(e) {
-                    __args = this.args;
+                    __args = ${this.args};
                 }
 
                 const instance = new clazz();

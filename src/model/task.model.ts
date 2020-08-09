@@ -28,7 +28,8 @@ export default class Task<TResult, TArgs> {
     execute(): Promise<TResult> {
         return new Promise(async (resolve, reject) => {
             const worker = new Worker(await this.toThreadSafeRunnable(), {
-                eval: true
+                eval: true,
+                workerData: this.args
             });
 
             worker.on('message', resolve);
@@ -52,14 +53,8 @@ export default class Task<TResult, TArgs> {
         const rawFn = this.fn.toString();
         let newRawFn = `
             (async () => {
-                const { parentPort } = require('worker_threads');
-                let __args;
-                
-                try {
-                    __args = JSON.parse('${JSON.stringify(this.args)}');
-                } catch(e) {
-                    __args = ${this.args};
-                }
+                const { parentPort, workerData } = require('worker_threads');
+                const __args = workerData;
 
                 const result = await (${rawFn})(__args);
                 parentPort.postMessage(result);          
@@ -74,21 +69,15 @@ export default class Task<TResult, TArgs> {
 
         return `
             (async () => {
-                const { parentPort } = require('worker_threads');
+                const { parentPort, workerData } = require('worker_threads');
+                const __args = workerData;
+
                 if (${isTypeScript}) {
                     require('ts-node').register();
                 }
+
                 const file = require('${fileName}');
-
                 const clazz = file.default ? file.default : file;
-
-                let __args;
-                
-                try {
-                    __args = JSON.parse('${JSON.stringify(this.args)}');
-                } catch(e) {
-                    __args = ${this.args};
-                }
 
                 const instance = new clazz();
                 const result = await instance.run(__args);

@@ -1,0 +1,27 @@
+{
+  "name": "true-parallel",
+  "version": "0.0.1",
+  "description": "Runs code over many threads",
+  "main": "src/main.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node src/main.ts",
+    "build": "tsc -p .",
+    "start:js": "node dist/main.js"
+  },
+  "keywords": [
+    "parallel",
+    "true",
+    "thread",
+    "multithread",
+    "core",
+    "async"
+  ],
+  "author": "Paul Cosma",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^14.0.27",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.7"
+  }
+}

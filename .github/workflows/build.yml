@@ -1,4 +1,4 @@
-name: master tests
+name: master build
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  run-tests:
+  run-build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,7 +28,5 @@ jobs:
       run: whoami
     - name: Install server dependencies
       run: npm install
-    - name: Transpiles files # so Jest will also run the tests using plain JS
+    - name: Transpiles files
       run: npm run build
-    - name: Test server
-      run: npm test

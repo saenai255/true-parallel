@@ -4,7 +4,7 @@
   "description": "Runs code over many threads",
   "main": "src/main.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "start": "ts-node src/main.ts",
     "build": "tsc -p .",
     "start:js": "node dist/main.js"
@@ -20,7 +20,10 @@
   "author": "Paul Cosma",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^26.0.9",
     "@types/node": "^14.0.27",
+    "jest": "^26.2.2",
+    "ts-jest": "^26.1.4",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.7"
   }

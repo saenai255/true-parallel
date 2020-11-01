@@ -11,22 +11,27 @@ Feel free the create issues and pull requests.
 
 Task Model:
 ```ts
-class Task<TResult, TArgs> {
+class Task<TResult, TArgs, TEvent = unknown> {
 	/**
 	 * @param fn Function to execute in a separate thread.
 	 * @param args Arguments passed to the function.
 	 */
-	static of(fn: TaskFunction<TResult, TArgs>, args: TArgs): Task<TResult, TArgs>;
+	static of(fn: TaskFunction<TResult, TArgs>, args: TArgs): Task<TResult, TArgs, never>;
 	/**
 	 * @param path *Absolute* path to the TaskSource interface implementation. 
 	 * @param args Arguments passed to the run function.
 	 */
-	static fromSource(path: string, args: TArgs): Task<TResult, TArgs>;
+	static fromSource(path: string, args: TArgs): Task<TResult, TArgs, TEvent>;
 
 	/**
 	 * Executes the current task in a different thread.
 	 */
 	execute(): Promise<TResult>;
+
+	/**
+	 * Returns an *rxjs* Observable that holds all the emitted events.
+	 */
+	events: Observable<TEvent>;
 }
 ```
 
@@ -74,7 +79,7 @@ interface ExampleTaskArgs {
 	b: number;
 }
 
-export default ExampleTask implements TaskSource<number, ExampleTaskArgs> {
+export default ExampleTask extends TaskSource<number, ExampleTaskArgs> {
 	run({ a, b }: ExampleTaskArgs): number | Promise<number> {
 		return a + b;
 	}
@@ -97,6 +102,35 @@ async function main(): Promise<void> {
 main();
 ```
 
+#### Emitting events from child to parent
 
+example-task-with-events.ts
+```ts
+export default ExampleTaskWithEvents extends TaskSource<boolean, void, string> {
+	run(): boolean {
+		this.eventPublisher.publish('Hello');
+		this.eventPublisher.publish('World!');
+		return true;
+	}
+}
+```
 
+main.ts
+```ts
+import ExampleTaskWithEvents from './example-task-with-events';
+import { resolve } from 'path';
 
+async function main(): Promise<void> {
+	const taskPath = resolve(__dirname, './example-task-with-events');
+	const task = Task.fromSource<ExampleTaskWithEvents>(taskPath);
+
+	task.events.subscribe(message => {
+		console.log(message); // prints 'Hello' then 'World!'
+	});
+
+	const result = await Task.execute();
+	console.log(result) // true;
+}
+
+main();
+```

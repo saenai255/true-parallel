@@ -6,7 +6,7 @@ import EmitFibNumbers from "./resources/event-emitting-task";
 
 describe(`Class-based tasks`, () => {
     test(`Task#fromSource - returns the correct value`, async () => {
-        const task = Task.fromSource<ExampleClass>(resolve(__dirname, '../resources/example-task'), {
+        const task = Task.fromSource<ExampleClass>(resolve(__dirname, './resources/example-task'), {
             a: 5,
             b: 7
         });
@@ -16,7 +16,7 @@ describe(`Class-based tasks`, () => {
     });
     
     test(`Task#fromSource - works using imports`, async () => {
-        const task = Task.fromSource<ExampleClassWithImports>(resolve(__dirname, '../resources/example-task-with-imports'), {
+        const task = Task.fromSource<ExampleClassWithImports>(resolve(__dirname, './resources/example-task-with-imports'), {
             a: 5,
             b: 7
         });

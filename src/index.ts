@@ -1,5 +1,2 @@
-import TaskClass from './model/task.model';
-export const Task = TaskClass;
-
-import TaskSourceClass from './model/task-source.model';
-export type TaskSource<TResult, TArgs> = TaskSourceClass<TResult, TArgs>;
+export { default as Task } from './model/task.model';
+export { default as TaskSource } from './model/task-source.model';

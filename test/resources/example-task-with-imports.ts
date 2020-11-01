@@ -1,12 +1,12 @@
-import { TaskSource } from "../src";
-import { sum } from "./utils";
+import { TaskSource } from "../../src";
+import { sum } from "../utils";
 
 export interface ExampleClassArgs {
     a: number;
     b: number;
 }
 
-export default class ExampleClassWithImports implements TaskSource<number, ExampleClassArgs> {
+export default class ExampleClassWithImports extends TaskSource<number, ExampleClassArgs> {
     run({ a, b }: ExampleClassArgs): number | Promise<number> {
         return this.computeSumUsingImportedFunction(a, b);
     }

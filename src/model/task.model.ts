@@ -1,21 +1,38 @@
 import TaskSource, { TaskSourceMeta } from "./task-source.model";
 import { Worker } from 'worker_threads';
 import { exists } from "fs";
+import { Observable, Subject, throwError } from "rxjs";
 
 export type TaskFunction<R, A extends Record<string | symbol, any>> = (args: A) => R | Promise<R>;
-type TaskSourceTypes<T> = T extends TaskSource<infer Result, infer Args> ? [Result, Args] : never; 
+type TaskSourceTypes<T> = T extends TaskSource<infer Result, infer Args, infer Event> ? [Result, Args, Event] : never;
 
-export default class Task<TResult, TArgs> {
+enum EventType {
+    EVENT_TASK_COMPLETED = 'EVENT_TASK_COMPLETED',
+    EVENT_PUBLISH = 'EVENT_PUBLISH'
+}
+
+interface TaskEvent<TResult> {
+    __TP_TYPE: EventType;
+    __TP_RESULT?: TResult;
+}
+
+function isTaskEvent(obj: any): obj is TaskEvent<any> {
+    return obj && '__TP_TYPE' in obj;
+}
+
+export default class Task<TResult, TArgs, TEvent = unknown> {
+    private events$ = new Subject<TEvent>();
+
     private constructor(
         private fn: TaskFunction<TResult, TArgs> | null,
         private sourcePath: string | null,
         private args: TArgs) { }
 
-    static of<TResult, TArgs>(fn: TaskFunction<TResult, TArgs>, args: TArgs = undefined): Task<TResult, TArgs> {
-        return new Task<TResult, TArgs>(fn, null, args);
+    static of<TResult, TArgs>(fn: TaskFunction<TResult, TArgs>, args: TArgs = undefined): Task<TResult, TArgs, never> {
+        return new Task<TResult, TArgs, never>(fn, null, args);
     }
 
-    static fromSource<T>(path: string, args: TaskSourceTypes<T>[1]): Task<TaskSourceTypes<T>[0], TaskSourceTypes<T>[1]> {
+    static fromSource<T>(path: string, args: TaskSourceTypes<T>[1]): Task<TaskSourceTypes<T>[0], TaskSourceTypes<T>[1], TaskSourceTypes<T>[2]> {
         return new Task(null, path, args);
     }
 
@@ -25,15 +42,41 @@ export default class Task<TResult, TArgs> {
         }, null, { ms });
     }
 
+    get events(): Observable<TEvent> {
+        return this.events$.asObservable();
+    }
+
     execute(): Promise<TResult> {
-        return new Promise(async (resolve, reject) => {
+        return new Promise<TResult>(async (resolve, reject) => {
             const worker = new Worker(await this.toThreadSafeRunnable(), {
                 eval: true,
                 workerData: this.args
             });
 
-            worker.on('message', resolve);
-            worker.on('error', reject);
+            worker.on('message', value => {
+                if (isTaskEvent(value)) {
+                    if (value.__TP_TYPE === EventType.EVENT_TASK_COMPLETED) {
+                        this.events$.complete();
+                        return resolve(value.__TP_RESULT);
+                    }
+
+                    if (value.__TP_RESULT) {
+                        this.events$.next(value.__TP_RESULT);
+                        return;
+                    }
+
+                    
+                } else {
+                    this.events$.complete();
+                    return reject(value);
+                }
+
+            });
+
+            worker.on('error', error => {
+                this.events$.complete();
+                reject(error)
+            });
         });
     }
 
@@ -57,7 +100,10 @@ export default class Task<TResult, TArgs> {
                 const __args = workerData;
 
                 const result = await (${rawFn})(__args);
-                parentPort.postMessage(result);          
+                parentPort.postMessage({
+                    __TP_RESULT: result,
+                    __TP_TYPE: '${EventType.EVENT_TASK_COMPLETED}'
+                });          
             })();
         `.trim();
 
@@ -80,8 +126,18 @@ export default class Task<TResult, TArgs> {
                 const clazz = file.default ? file.default : file;
 
                 const instance = new clazz();
+                instance.eventPublisher = {
+                    publish: arg => parentPort.postMessage({
+                        __TP_RESULT: arg,
+                        __TP_TYPE: '${EventType.EVENT_PUBLISH}'
+                    })
+                };
+                
                 const result = await instance.run(__args);
-                parentPort.postMessage(result);
+                parentPort.postMessage({
+                    __TP_RESULT: result,
+                    __TP_TYPE: '${EventType.EVENT_TASK_COMPLETED}'
+                });
             })();
         `;
     }
